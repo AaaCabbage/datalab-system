@@ -1,0 +1,288 @@
+<!--beyhhhh code-->
+{% extends "repo-browse-template.html" %}
+{% block tabs %}
+
+
+{% endblock %}
+{% block tab-content %}
+
+<div class="container">
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <span class="lead"> 
+      Data &nbsp;
+      <button class="btn btn-default btn-sm modal-upload-dialog" type="button"  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/add_datas'" title="Add new data"><span class="glyphicon glyphicon-plus"></span></button>
+        {%if right.data_public%}
+      <!--  <button class="btn btn-primary btn-xsm modal-upload-dialog" type="button" target-modal="#file-upload-modal" title="Upload a New File" style = "float:right;margin-right:0;">Upload Data</button>-->
+        {%endif%}
+      </span>
+  </div>
+ 
+  {% if data_set%}
+    <div class="table-responsive">
+      <table class="table">
+        <tbody>            
+          {% for key,datas in data_set.items %}
+          <tr>
+            <td>
+              <a id = "{{key}}_show" onClick= "window.open('/browse/{{login}}/{{repo}}/{{datas.0.id}}/table_show')">
+                  {{key}}
+              </a>   
+            </td>
+            
+            <td>
+                <select id="products" name="products" onchange="show(this.value,'{{key}}')">
+                   {%for a in datas%}
+                        <option value= "{{a.id}}">{{a.short_commit_id}}</option>
+                   {%endfor%}
+                 </select>
+            <td class="text-right">
+             {%if right.data_public%}
+             <button type="button"
+                  id = "Make_data_set_public_{{key}}"
+                  class="btn btn-primary" 
+                  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/{{datas.0.id}}/Make_data_set_public'">
+                 Make it public
+              </button>
+               {%endif%}
+             </td>
+          </tr>
+          {% endfor %} 
+        </tbody>
+      </table>
+    </div>
+    
+  {% else %}
+    <p class="bg-warning">No data set in <strong>{{repo_base}}/{{repo}}</strong></p>
+  {% endif %} 
+  </div>
+    
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <span class="lead">
+      Code &nbsp;
+      <button class="btn btn-default btn-sm modal-upload-dialog" type="button"  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/add_codes'" title="Add new code"><span class="glyphicon glyphicon-plus"></span></button>
+        
+      <button class="btn btn-primary btn-xsm back" type="button"  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/branch_list'" title="Push Codes" style = "float:right;margin-right:0;">Code Version</button>
+    </span>
+  </div>
+
+  {% if Code_list and Code_list|length > 0 %}
+    <div class="table-responsive">
+      <table class="table">
+        <tbody>            
+          {% for code in Code_list %}
+          <tr>
+             <td>
+              <a  onClick= "window.open('http://datalab.iiis.systems:8000/user/{{repo_base}}/{{code.url}}/{{repo}}_{{repo_base}}/{{code.name}}')">{{code.name}}</a>
+            </td>
+            
+              
+            <td class="text-right">
+              <span
+                  class="modal-link modal-confirm-dialog"
+                  target-modal="#confirm-modal"
+                  target-modal-title="Confirm Delete"
+                  target-modal-body="This will permanently delete the file <strong><em>{{repo_base}}/{{repo}}/file/{{code}}</em></strong>. The operation can't be undone. Are you sure?"
+                  target-modal-operation="Delete"
+                  target-url="/delete/{{repo_base}}/{{repo}}/file/{{code.name}}"
+                  title="Delete">
+                <span class="delete-icon"></span>
+              </span>
+            {%if right.code_public%}
+             <button type="button"
+                  id = "Make_data_set_public_{{key}}"
+                  class="btn btn-primary" 
+                  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/{{code.name}}/Make_code_public'">
+                 Make it public
+              </button>
+              {%endif%}
+             </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+  {% else %}
+    <p class="bg-warning">No code set in <strong>{{repo_base}}/{{repo}}</strong></p>
+  {% endif %} 
+  </div>
+    
+ <div class="panel panel-default">
+  <div class="panel-heading">
+    <span class="lead">
+      Project Push Commit &nbsp;
+      
+    </span>
+  </div>
+       
+     
+  {% if commit_list.exp_records %}
+    <div class="table-responsive">
+      <table class="table">
+        <tbody>            
+          {% for commit in commit_list.exp_records %}
+          <tr>  
+              <td>
+              <a>
+                 {{commit.commit.short_id}}
+              </a>
+              </td>
+              
+              <td>
+                  {{commit.time}}
+              </td>
+              
+              <td>
+                <select id="products" name="products" onchange="select_src(this.value,'{{commit.commit.id}}')">
+                   {%for a in commit.codes%}
+                        <option value= "{{a}}">{{a}}</option>
+                   {%endfor%}
+                </select>
+              <td>
+              
+              <td>
+                 {%if commit.has_run%}
+                      {%if commit.is_run %}
+                         <a
+                  class="modal-link modal-confirm-dialog"
+                  target-modal="#confirm-modal"
+                  target-modal-title="Program Return"
+                  target-modal-body="{{commit.return_html_show}}"
+                  target-modal-operation="Re Run"
+                  target-url="/browse/{{repo_base}}/{{repo}}/{{commit.commit.id}}/{{commit.codes.0}}/run"
+                  title="Delete">have been run
+                          </a>
+                      {%else%}
+                          running
+                      {%endif%}
+                  {%else%}
+                     waite for run
+                  {%endif%}
+              </td>
+              <td class="text-right">
+              <button id = "{{commit.commit.id}}"
+                   type="button"
+                   class="btn btn-primary" 
+                   onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/{{commit.commit.id}}/{{commit.codes.0}}/run'">
+                   Run
+              </button>
+              </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+  {% else %}
+    <p class="bg-warning">No data set in <strong>{{repo_base}}/{{repo}}</strong></p>
+  {% endif %} 
+  </div>
+    
+    <button class="btn btn-primary btn-xsm back" type="button"  onClick= "window.open('http://datalab.iiis.systems:8000/user/{{repo_base}}/tree/{{repo}}_{{repo_base}}')" title="Manager Code">Manage Code</button>
+    <button class="btn btn-primary btn-xsm back" type="button"  onclick="window.location.href='/browse/{{repo_base}}/{{repo}}/upload_github'" title="Push Codes" style = "float:right;margin-right:0;">Push Code</button>
+ </div>
+
+
+<script type="text/javascript">
+    
+    
+function select_src(src_name,commit_id) {
+document.getElementById(commit_id).onclick = function(){window.location.href='/browse/{{repo_base}}/{{repo}}/' + commit_id + '/' + src_name + '/run'}
+}
+    
+function show(data_id,data_name) {
+    var data_show = data_name + '_show'
+    var public = 'Make_data_set_public_' + data_name
+    document.getElementById(data_show).onclick = function(){window.open('/browse/{{login}}/{{repo}}/' + data_id +'/table_show')}
+    document.getElementById(public).onclick = function(){window.location.href='/browse/{{repo_base}}/{{repo}}/'+ data_id +'/Make_data_set_public'}
+}
+    
+    
+function ale(result)
+{
+    alert(result);
+}
+</script>  
+
+
+<div class="modal" id="file-upload-modal" 
+    tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+          <span class="sr-only">Close</span>
+        </button>
+        <h4 class="modal-title" id="file-upload-modal-title">Upload File</h4>
+      </div>
+      <div class="modal-body" id="file-upload-modal-body">
+        <form role="form" method="POST" action="/upload/{{repo_base}}/{{repo}}/data" enctype='multipart/form-data' id="file-upload-modal-form">
+          <div class="form-group">
+            {% csrf_token %}
+            <input type="file" class="form-control" name="data_file" placeholder="Data File">
+          </div>
+        </form>   
+      </div>
+      <div class="modal-footer">
+        <button type="button"
+            class="btn btn-primary" id="file-upload-modal-operation">Upload</button>
+        <button type="button"
+            class="btn btn-default" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+$(function() {
+  $('.modal-import-dialog').on('click', function(e){
+    var modal_id = $(this).attr('target-modal')
+    var target_url = $(this).attr('target-url')
+    var target_file = $(this).attr('target-file')
+
+    $(modal_id).off('click');
+    
+    $(modal_id).modal({keyboard: true})
+      .on('click', modal_id + '-operation', function(e) {
+        $("#import-file-name").val(target_file)
+        $("#frm-import").attr("action", target_url)
+        $("#frm-import").submit()
+        $(modal_id).modal('hide')
+        $("#wait-dialog").modal()
+      });
+  });
+    
+    
+ $(function() {
+  $('.modal-reult-dialog').on('click', function(e){
+    var modal_id = $(this).attr('target-modal')
+    var target_file = $(this).attr('target-file')
+
+    $(modal_id).off('click');
+    
+  });   
+
+  $('.modal-upload-dialog').on('click', function(e){
+    var modal_id = $(this).attr('target-modal')
+    $(modal_id).off('click');
+
+    $(modal_id).modal({keyboard: true})
+      .on('click', modal_id + '-operation', function(e) {
+        $(modal_id + '-form').submit()
+        $(modal_id).modal('hide')
+        $("#wait-dialog").modal()
+      });
+  });
+
+});
+</script>
+
+
+
+{% endblock %}
+
+
+
