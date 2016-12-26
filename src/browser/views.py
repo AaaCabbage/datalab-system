@@ -43,6 +43,7 @@ from utils import post_or_get
 from django.views.decorators.csrf import csrf_protect
 from watchdog import update_every
 import watchdog
+
 from datalab import *
 '''
 Datahub Web Handler
@@ -1141,6 +1142,10 @@ def get_branch_code(username,repo,commit_id,P_id):
                 f = open( target_path + '/'+ a)
                 code_list.append({"name":a ,"code": f.read()})
                 f.close()
+            if a[a.rfind('.'):] == ".java":
+                f = open( target_path + '/'+ a)
+                code_list.append({"name":a ,"code": f.read()})
+                f.close()
 
             if a[a.rfind('.'):] == ".ipynb":
                 f = open(target_path + '/' + a)
@@ -1654,7 +1659,7 @@ def updata_record_result(request):
     with open(file_path,'rb') as f:
         reader = list(csv.reader(f))
         f.close()
-        
+
     reader.pop(0)
     for a in reader:
         username = a[1]
@@ -1668,17 +1673,17 @@ def updata_record_result(request):
                         os.mkdir("/home/ubuntu/result")
                     if not os.path.isdir("/home/ubuntu/result/%s"%(username)):
                         os.mkdir("/home/ubuntu/result/%s"%(username))
-                        
-                   
+
+
                     data = db_connect.get_poject_exp_list(username,get_clone_name(username,repo_name))
-                    
+
                     data_list = []
                     for a in data["exp_records"]:
-                        
+
                         if a.has_key("accuracy"):
-                            
+
                             print a
-                            
+
                             data_dic = {}
                             data_dic["time"] = a["time"]
                             data_dic["commit"] = a["commit"]["id"]
@@ -1689,13 +1694,13 @@ def updata_record_result(request):
                     if data_list == []:
                         continue
                     print data_list
-                    FIELDS = ['user_name','time', 'commit', 'accuracy', 'project']    
-                    csv_file = open("/home/ubuntu/result/%s/%s.csv"%(username,repo_name),'wb')  
+                    FIELDS = ['user_name','time', 'commit', 'accuracy', 'project']
+                    csv_file = open("/home/ubuntu/result/%s/%s.csv"%(username,repo_name),'wb')
                     writer = csv.DictWriter(csv_file, fieldnames = FIELDS)
                     writer.writerow(FIELDS)
                     writer.writerows(data_list)
                     csv_file.close()
-                    
+
     return
 
 def creat_csv(username,file_name,data):
@@ -1704,7 +1709,7 @@ def creat_csv(username,file_name,data):
 
 def accuracy_show(request):
     res={}
-    
+
     List_user = os.listdir("/home/ubuntu/result")
     plot_record = {}
     file_name_record = {}
@@ -1717,10 +1722,10 @@ def accuracy_show(request):
                 with open(file_path,'rb') as f:
                     reader = list(csv.reader(f))
                     f.close()
-                
+
                 if len(reader) <= 10:
                     continue
-                file_names.append(file_name)    
+                file_names.append(file_name)
                 data = []
                 time = []
                 SUM = 0
@@ -1731,13 +1736,13 @@ def accuracy_show(request):
                 plot_record[file_name]['data'] = data
                 plot_record[file_name]['time'] = time
             file_name_record[user] = file_names
-                
+
     res = {
         'plot_record':json.dumps(plot_record),
         'file_name_record':json.dumps(file_name_record)
-    }                
+    }
     return render_to_response("repo-browse-accuracy-show.html", res)
-    
+
 import types
 def result_show(request):
     username = request.user.get_username()
@@ -1854,7 +1859,7 @@ def file_upload(request, repo_base, repo):
         manager.save_file(repo, data_file)
 
     return HttpResponseRedirect(
-        reverse('browser-repo_files', args=(repo_base, repo)))
+        reverse('browser-repo', args=(repo_base, repo)))
 
 
 
@@ -1984,9 +1989,9 @@ def file_delete(request, repo_base, repo, file_name):
 
 def file_download(request, repo_base, repo, file_name):
     username = request.user.get_username()
-
+    clone_name = get_clone_name(username,repo)
     with DataHubManager(user=username, repo_base=repo_base) as manager:
-        file_to_download = manager.get_file(repo, file_name)
+        file_to_download = manager.get_file(clone_name, file_name)
 
     response = HttpResponse(file_to_download,
                             content_type='application/force-download')
